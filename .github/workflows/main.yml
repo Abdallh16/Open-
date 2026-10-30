@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -50,14 +50,14 @@ jobs:
       - name: Generate debug signing keystore
         working-directory: project
         run: |
-          keytool -genkeypair -v \\
-            -keystore debug.keystore \\
-            -storepass android \\
-            -alias androiddebugkey \\
-            -keypass android \\
-            -keyalg RSA \\
-            -keysize 2048 \\
-            -validity 10000 \\
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Build debug APK
@@ -77,15 +77,3 @@ jobs:
           path: project/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
-
-      - name: Publish direct APK download
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nexus-ai-debug-20261030
-          name: Nexus AI - Android APK
-          body: |
-            Direct APK download for Nexus AI.
-            Build type: Debug.
-          files: project/app/build/outputs/apk/debug/app-debug.apk
-          fail_on_unmatched_files: true
-          make_latest: false
