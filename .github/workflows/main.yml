@@ -1,44 +1,59 @@
-
 name: Build Android APK
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Set up Java
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract project
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
-          mkdir project
-          unzip -q nexus-ai.zip -d project
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Build APK
+      - name: Install Android SDK packages
         run: |
-          GRADLEW=$(find project -type f -name gradlew | head -n 1)
-          if [ -z "$GRADLEW" ]; then
-            echo "Gradle wrapper not found"
-            exit 1
-          fi
-          cd "$(dirname "$GRADLEW")"
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Extract Android project
+        run: |
+          mkdir -p project
+          unzip -q nexus-ai.zip -d project
+          test -f project/settings.gradle.kts
+          test -f project/app/build.gradle.kts
+
+      - name: Build debug APK
+        working-directory: project
+        run: gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Verify APK
+        run: |
+          APK_PATH="project/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK_PATH"
+          ls -lh "$APK_PATH"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Android-APK
-          path: project/**/build/outputs/apk/**/*.apk
+          name: Nexus-AI-debug-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
