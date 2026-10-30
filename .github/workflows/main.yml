@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -24,17 +24,14 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
-          packages: |
-            platform-tools
-            platforms;android-36
-            build-tools;36.0.0
+          packages: ''
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
+      - name: Install Android build packages
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses
 
       - name: Extract Android project
         run: |
@@ -42,6 +39,13 @@ jobs:
           unzip -q nexus-ai.zip -d project
           test -f project/settings.gradle.kts
           test -f project/app/build.gradle.kts
+          echo "=== Android Gradle Plugin / Kotlin versions ==="
+          grep -R -n -E 'com.android.application|com.android.library|org.jetbrains.kotlin.android|kotlin =|agp =' project/settings.gradle.kts project/build.gradle.kts project/gradle/libs.versions.toml project/app/build.gradle.kts 2>/dev/null || true
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
 
       - name: Build debug APK
         working-directory: project
