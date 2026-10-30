@@ -1,0 +1,44 @@
+
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract project
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          mkdir project
+          unzip -q nexus-ai.zip -d project
+
+      - name: Build APK
+        run: |
+          GRADLEW=$(find project -type f -name gradlew | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "Gradle wrapper not found"
+            exit 1
+          fi
+          cd "$(dirname "$GRADLEW")"
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: project/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
