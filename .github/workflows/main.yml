@@ -51,6 +51,17 @@ jobs:
           echo "=== Android Gradle Plugin / Kotlin versions ==="
           grep -R -n -E 'com.android.application|com.android.library|org.jetbrains.kotlin.android|kotlin =|agp =' project/settings.gradle.kts project/build.gradle.kts project/gradle/libs.versions.toml project/app/build.gradle.kts 2>/dev/null || true
 
+      - name: Inspect exported app contents
+        run: |
+          echo "=== Kotlin source files ==="
+          find project/app/src/main/java -type f -name '*.kt' -print
+          echo "=== App manifest ==="
+          find project/app/src/main -name AndroidManifest.xml -print -exec sed -n '1,220p' {} \\\;
+          echo "=== Kotlin entry points and screen titles ==="
+          grep -R -n -E 'class MainActivity|fun MainActivity|setContent|Hello Android|مرحبا|NavHost|@Composable|applicationId|app_name' project/app/src/main/java project/app/src/main/res 2>/dev/null | head -240 || true
+          echo "=== Resources ==="
+          find project/app/src/main/res -maxdepth 3 -type f | sort | head -200
+
       - name: Repair missing app dependencies and theme imports
         run: |
           python3 - <<'PY'
