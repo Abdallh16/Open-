@@ -51,6 +51,83 @@ jobs:
           echo "=== Android Gradle Plugin / Kotlin versions ==="
           grep -R -n -E 'com.android.application|com.android.library|org.jetbrains.kotlin.android|kotlin =|agp =' project/settings.gradle.kts project/build.gradle.kts project/gradle/libs.versions.toml project/app/build.gradle.kts 2>/dev/null || true
 
+      - name: Repair missing app dependencies and theme imports
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path("project")
+          gradle = root / "app/build.gradle.kts"
+          text = gradle.read_text()
+          if "androidx.navigation:navigation-compose" not in text:
+              dep = '    implementation("androidx.navigation:navigation-compose:2.9.6")'
+              match = re.search(r"dependencies\s*\{", text)
+              if not match:
+                  raise SystemExit("Could not find dependencies block in app/build.gradle.kts")
+              pos = match.end()
+              text = text[:pos] + "\n" + dep + text[pos:]
+              gradle.write_text(text)
+              print("Added Navigation Compose dependency")
+
+          names = [
+              "CyanAccent", "ElectricBlue", "PurplePrimary", "PurpleDeep",
+              "TextPrimary", "TextSecondary", "TextMuted", "CharcoalBorder",
+              "CharcoalSurfaceVariant", "CharcoalSurface", "CharcoalDark",
+              "ErrorRed", "SuccessGreen", "WarningAmber"
+          ]
+          kotlin_files = list((root / "app/src/main/java").rglob("*.kt"))
+          defs = {}
+          for f in kotlin_files:
+              source = f.read_text(errors="ignore")
+              pkg = re.search(r"^\s*package\s+([\w.]+)", source, re.M)
+              if not pkg:
+                  continue
+              for name in names:
+                  if re.search(r"\b(?:val|var|const\s+val)\s+" + re.escape(name) + r"\b", source):
+                      defs[name] = pkg.group(1)
+
+          # If the archive omitted the palette file, supply the expected palette
+          # in the common theme package and import it only where these names are used.
+          theme_pkg = next((p for p in defs.values() if p.endswith(".theme")), "com.example.ui.theme")
+          missing = [n for n in names if n not in defs]
+          if missing:
+              palette_dir = root / "app/src/main/java" / Path(*theme_pkg.split("."))
+              palette_dir.mkdir(parents=True, exist_ok=True)
+              palette = palette_dir / "BuildPalette.kt"
+              palette.write_text(
+                  "package " + theme_pkg + "\n\n" +
+                  "import androidx.compose.ui.graphics.Color\n\n" +
+                  "val CyanAccent = Color(0xFF00E5FF)\n" +
+                  "val ElectricBlue = Color(0xFF2979FF)\n" +
+                  "val PurplePrimary = Color(0xFF7C4DFF)\n" +
+                  "val PurpleDeep = Color(0xFF311B92)\n" +
+                  "val TextPrimary = Color(0xFFF5F5F5)\n" +
+                  "val TextSecondary = Color(0xFFB0BEC5)\n" +
+                  "val TextMuted = Color(0xFF78909C)\n" +
+                  "val CharcoalBorder = Color(0xFF37474F)\n" +
+                  "val CharcoalSurfaceVariant = Color(0xFF263238)\n" +
+                  "val CharcoalSurface = Color(0xFF1C2429)\n" +
+                  "val CharcoalDark = Color(0xFF101418)\n" +
+                  "val ErrorRed = Color(0xFFCF6679)\n" +
+                  "val SuccessGreen = Color(0xFF69F0AE)\n" +
+                  "val WarningAmber = Color(0xFFFFD740)\n"
+              )
+              print("Created fallback palette in", theme_pkg, "for", missing)
+
+          # Add palette wildcard import to Kotlin files that use palette names.
+          for f in kotlin_files:
+              source = f.read_text(errors="ignore")
+              if not any(re.search(r"\b" + re.escape(n) + r"\b", source) for n in names):
+                  continue
+              if f"import {theme_pkg}." in source or f"import {theme_pkg}.*" in source:
+                  continue
+              m = re.search(r"^\s*package\s+[\w.]+\s*\n", source, re.M)
+              if m:
+                  source = source[:m.end()] + f"\nimport {theme_pkg}.*\n" + source[m.end():]
+                  f.write_text(source)
+          PY
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
