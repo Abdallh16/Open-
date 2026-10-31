@@ -54,6 +54,7 @@ jobs:
       - name: Wire Nexus launcher and real app entry point
         shell: bash
         run: |
+          python3 -m pip install --user Pillow
           python3 - <<'PY'
           from pathlib import Path
           from PIL import Image, ImageOps
