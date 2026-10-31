@@ -241,6 +241,27 @@ jobs:
             echo "Created empty project/.env.example for Gradle configuration."
           fi
 
+      - name: Provide Android auth redirect scheme placeholder
+        working-directory: project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          gradle = Path("app/build.gradle.kts")
+          text = gradle.read_text()
+          if "appAuthRedirectScheme" not in text:
+              match = re.search(r"(?m)^\\s*defaultConfig\\s*\\{", text)
+              if not match:
+                  raise SystemExit("Could not find defaultConfig block in app/build.gradle.kts")
+              pos = match.end()
+              text = text[:pos] + '\\n        manifestPlaceholders["appAuthRedirectScheme"] = "nexusai" ' + text[pos:]
+              gradle.write_text(text)
+              print("Added appAuthRedirectScheme manifest placeholder: nexusai")
+          else:
+              print("Manifest redirect scheme already configured in Gradle.")
+          PY
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
