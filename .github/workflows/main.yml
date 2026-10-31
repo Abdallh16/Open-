@@ -283,6 +283,26 @@ jobs:
           echo "=== HTTP / MCP dependencies ==="
           grep -R -n -E 'ktor-client|okhttp|retrofit|HttpResponse|Response<|isSuccessful|\.body' project/gradle/libs.versions.toml project/build.gradle.kts project/app/build.gradle.kts project/gradle 2>/dev/null | head -240 || true
 
+      - name: Fix missing OkHttp execute call in OAuth discovery
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          matches = list(Path("project/app/src/main").rglob("McpToolExecutor.kt"))
+          if len(matches) != 1:
+              raise SystemExit(f"Expected exactly one McpToolExecutor.kt, found {len(matches)}")
+          path = matches[0]
+          source = path.read_text()
+          old = 'val response = client.newCall(Request.Builder().url(url).get().build())'
+          new = 'val response = client.newCall(Request.Builder().url(url).get().build()).execute()'
+          count = source.count(old)
+          if count != 1:
+              raise SystemExit(f"Expected one missing execute() call, found {count}; refusing unsafe patch")
+          source = source.replace(old, new, 1)
+          path.write_text(source)
+          print(f"Fixed OkHttp Call execution in {path}")
+          PY
+
       - name: Build debug APK
         working-directory: project
         run: gradle --no-daemon :app:assembleDebug --stacktrace
