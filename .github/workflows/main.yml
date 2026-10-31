@@ -232,6 +232,15 @@ jobs:
                   f.write_text(source)
           PY
 
+      - name: Ensure example environment file exists
+        run: |
+          # The Google Maps secrets plugin fails configuration if this optional template is absent.
+          # Keep any exported file intact; create an empty template only when the ZIP omitted it.
+          if [ ! -f project/.env.example ]; then
+            touch project/.env.example
+            echo "Created empty project/.env.example for Gradle configuration."
+          fi
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
