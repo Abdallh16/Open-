@@ -60,6 +60,15 @@ jobs:
             echo "--- $manifest ---"
             sed -n '1,220p' "$manifest"
           done < <(find project/app/src/main -name AndroidManifest.xml -print)
+          echo "=== MainActivity source ==="
+          sed -n '1,240p' project/app/src/main/java/com/example/MainActivity.kt
+          echo "=== NexusApp navigation source ==="
+          sed -n '1,220p' project/app/src/main/java/com/example/ui/NexusApp.kt
+          echo "=== Launcher icon adaptive resources ==="
+          for f in project/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml project/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml project/app/src/main/res/drawable/ic_launcher_foreground.xml project/app/src/main/res/drawable/ic_launcher_background.xml; do
+            echo "--- $f ---"
+            sed -n '1,180p' "$f"
+          done
           echo "=== Kotlin entry points and screen titles ==="
           grep -R -n -E 'class MainActivity|fun MainActivity|setContent|Hello Android|مرحبا|NavHost|@Composable|applicationId|app_name' project/app/src/main/java project/app/src/main/res 2>/dev/null | head -240 || true
           echo "=== Resources ==="
