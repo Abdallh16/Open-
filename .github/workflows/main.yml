@@ -295,10 +295,14 @@ jobs:
           source = path.read_text()
           old = 'val response = client.newCall(Request.Builder().url(url).get().build())'
           new = 'val response = client.newCall(Request.Builder().url(url).get().build()).execute()'
-          count = source.count(old)
-          if count != 1:
-              raise SystemExit(f"Expected one missing execute() call, found {count}; refusing unsafe patch")
-          source = source.replace(old, new, 1)
+          # Match only a complete statement that ends at the closing parenthesis.
+          # Other valid OkHttp calls contain the same prefix followed by .execute().
+          import re
+          pattern = re.compile(r"(?m)^(\\s*val response = client\\.newCall\\(Request\\.Builder\\(\\)\\.url\\(url\\)\\.get\\(\\)\\.build\\(\\)\\))\\s*$")
+          matches = list(pattern.finditer(source))
+          if len(matches) != 1:
+              raise SystemExit(f"Expected exactly one unexecuted OkHttp response assignment, found {len(matches)}; refusing unsafe patch")
+          source = pattern.sub(lambda m: m.group(1) + ".execute()", source, count=1)
           path.write_text(source)
           print(f"Fixed OkHttp Call execution in {path}")
           PY
