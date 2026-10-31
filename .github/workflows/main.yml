@@ -36,7 +36,16 @@ jobs:
       - name: Extract Android project
         run: |
           mkdir -p project
-          unzip -q nexus-ai.zip -d project
+          if [ -f nexus-ai.zip ]; then
+            ARCHIVE="nexus-ai.zip"
+          elif [ -f zip.zip ]; then
+            ARCHIVE="zip.zip"
+          else
+            echo "ERROR: No project ZIP found (expected nexus-ai.zip or zip.zip)"
+            exit 1
+          fi
+          echo "Using archive: $ARCHIVE"
+          unzip -q "$ARCHIVE" -d project
           test -f project/settings.gradle.kts
           test -f project/app/build.gradle.kts
           echo "=== Android Gradle Plugin / Kotlin versions ==="
