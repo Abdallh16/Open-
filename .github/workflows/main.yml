@@ -36,14 +36,16 @@ jobs:
       - name: Extract Android project
         run: |
           mkdir -p project
-          if [ -f untitled.zip ]; then
+          if [ -f nexus2-ai.zip ]; then
+            ARCHIVE="nexus2-ai.zip"
+          elif [ -f untitled.zip ]; then
             ARCHIVE="untitled.zip"
           elif [ -f nexus-ai.zip ]; then
             ARCHIVE="nexus-ai.zip"
           elif [ -f zip.zip ]; then
             ARCHIVE="zip.zip"
           else
-            echo "ERROR: No project ZIP found (expected untitled.zip, nexus-ai.zip, or zip.zip)"
+            echo "ERROR: No project ZIP found (expected nexus2-ai.zip, untitled.zip, nexus-ai.zip, or zip.zip)"
             exit 1
           fi
           echo "Using archive: $ARCHIVE"
