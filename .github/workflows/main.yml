@@ -56,7 +56,10 @@ jobs:
           echo "=== Kotlin source files ==="
           find project/app/src/main/java -type f -name '*.kt' -print
           echo "=== App manifest ==="
-          find project/app/src/main -name AndroidManifest.xml -print -exec sed -n '1,220p' {} \\\;
+          while IFS= read -r manifest; do
+            echo "--- $manifest ---"
+            sed -n '1,220p' "$manifest"
+          done < <(find project/app/src/main -name AndroidManifest.xml -print)
           echo "=== Kotlin entry points and screen titles ==="
           grep -R -n -E 'class MainActivity|fun MainActivity|setContent|Hello Android|مرحبا|NavHost|@Composable|applicationId|app_name' project/app/src/main/java project/app/src/main/res 2>/dev/null | head -240 || true
           echo "=== Resources ==="
