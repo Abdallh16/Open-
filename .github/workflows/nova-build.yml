@@ -44,4 +44,4 @@ jobs:
           print(z.read("metadata.json").decode())
           PY
 
-# Trigger inspection workflow after initial registration.
+# Trigger detailed Nova build configuration inspection.
