@@ -30,7 +30,7 @@ jobs:
           z=zipfile.ZipFile("nova.zip")
           names=z.namelist()
           roots=sorted({n.split("/")[0] for n in names if n})
-          print("\n".join(roots))
+          print("\\n".join(roots))
           print("TOTAL_ENTRIES",len(names))
           print("\\n=== Embedded Nova build workflow ===")
           print(z.read(".github/workflows/build.yml").decode())
@@ -72,6 +72,19 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
+
+      - name: Create debug signing keystore
+        working-directory: nova-project
+        run: |
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Build Nova debug APK
         working-directory: nova-project
