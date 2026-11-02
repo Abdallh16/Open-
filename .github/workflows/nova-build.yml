@@ -33,3 +33,5 @@ jobs:
           print("\n".join(roots))
           print("TOTAL_ENTRIES",len(names))
           PY
+
+# Trigger inspection workflow after initial registration.
