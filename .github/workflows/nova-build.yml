@@ -32,6 +32,16 @@ jobs:
           roots=sorted({n.split("/")[0] for n in names if n})
           print("\n".join(roots))
           print("TOTAL_ENTRIES",len(names))
+          print("\\n=== Embedded Nova build workflow ===")
+          print(z.read(".github/workflows/build.yml").decode())
+          print("\\n=== Root Gradle build ===")
+          print(z.read("build.gradle.kts").decode())
+          print("\\n=== App Gradle build ===")
+          print(z.read("app/build.gradle.kts").decode())
+          print("\\n=== Gradle wrapper properties ===")
+          print(z.read("gradle/wrapper/gradle-wrapper.properties").decode())
+          print("\\n=== Metadata ===")
+          print(z.read("metadata.json").decode())
           PY
 
 # Trigger inspection workflow after initial registration.
