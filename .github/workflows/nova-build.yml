@@ -66,7 +66,7 @@ jobs:
       - name: Install Nova Android SDK platforms
         run: |
           yes | sdkmanager --licenses
-          sdkmanager --install "platforms;android-36" "platforms;android-36-ext1" "build-tools;36.0.0"
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
