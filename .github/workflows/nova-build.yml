@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'nova.zip'
+      - 'nova (1).zip'
       - '.github/workflows/nova-build.yml'
 
 permissions:
@@ -19,15 +19,15 @@ jobs:
       - name: Inspect Nova archive
         run: |
           set -e
-          test -s nova.zip
+          test -s 'nova (1).zip'
           echo "=== Archive file ==="
-          file nova.zip
+          file 'nova (1).zip'
           echo "=== Archive listing ==="
-          unzip -l nova.zip | head -250
+          unzip -l 'nova (1).zip' | head -250
           echo "=== Root entries ==="
           python3 - <<'PY'
           import zipfile
-          z=zipfile.ZipFile("nova.zip")
+          z=zipfile.ZipFile("nova (1).zip")
           names=z.namelist()
           roots=sorted({n.split("/")[0] for n in names if n})
           print("\\n".join(roots))
@@ -47,7 +47,7 @@ jobs:
       - name: Extract Nova Android project
         run: |
           mkdir -p nova-project
-          unzip -q nova.zip -d nova-project
+          unzip -q 'nova (1).zip' -d nova-project
           test -f nova-project/settings.gradle.kts
           test -f nova-project/app/build.gradle.kts
           test -f nova-project/gradle/libs.versions.toml
