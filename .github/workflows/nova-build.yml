@@ -1,0 +1,35 @@
+name: Build Nova
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'nova.zip'
+      - '.github/workflows/nova-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Inspect Nova archive
+        run: |
+          set -e
+          test -s nova.zip
+          echo "=== Archive file ==="
+          file nova.zip
+          echo "=== Archive listing ==="
+          unzip -l nova.zip | head -250
+          echo "=== Root entries ==="
+          python3 - <<'PY'
+          import zipfile
+          z=zipfile.ZipFile("nova.zip")
+          names=z.namelist()
+          roots=sorted({n.split("/")[0] for n in names if n})
+          print("\n".join(roots))
+          print("TOTAL_ENTRIES",len(names))
+          PY
